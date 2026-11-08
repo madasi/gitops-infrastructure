@@ -1,0 +1,70 @@
+---
+- name: Harden and Prepare Bare-Metal Proxmox Laptop Hosts
+  hosts: proxmox_hosts
+  become: false
+
+  tasks:
+    - name: Prevent laptop sleep on lid close
+      ansible.builtin.replace:
+        path: /etc/systemd/logind.conf
+        regexp: "{{ item.regexp }}"
+        replace: "{{ item.replace }}"
+      loop:
+        - { regexp: '^#?HandleLidSwitch=.*', replace: 'HandleLidSwitch=ignore' }
+        - { regexp: '^#?HandleLidSwitchExternalPower=.*', replace: 'HandleLidSwitchExternalPower=ignore' }
+      notify: Restart systemd-logind
+
+    - name: Disable Proxmox Enterprise Repository
+      ansible.builtin.replace:
+        path: /etc/apt/sources.list.d/pve-enterprise.list
+        regexp: '^deb '
+        replace: '#deb '
+
+    - name: Add Proxmox No-Subscription Repository
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/pve-no-subscription.list
+        content: |
+          deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription
+        mode: '0644'
+
+    - name: Update apt cache and upgrade system packages
+      ansible.builtin.apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: Create dedicated ansible user
+      ansible.builtin.user:
+        name: ansible
+        state: present
+        shell: /bin/bash
+        create_home: yes
+
+    - name: Allow ansible user to have passwordless sudo
+      ansible.builtin.copy:
+        dest: /etc/sudoers.d/ansible
+        content: "ansible ALL=(ALL) NOPASSWD: ALL"
+        mode: '0440'
+
+    - name: Set up authorized keys for the ansible user
+      ansible.posix.authorized_key:
+        user: ansible
+        state: present
+        key: "{{ lookup('file', '~/.ssh/id_homelab.pub') }}"
+
+    - name: Disable Proxmox subscription nag message (UI Patch)
+      ansible.builtin.replace:
+        path: /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
+        regexp: "if \\(res === null \\|\\| res === undefined \\|\\| \\!res \\|\\| res\n\\s+\\.data\\.status \\!== 'Active'\\) \\{"
+        replace: "if (false) {"
+      notify: Restart pveproxy
+
+  handlers:
+    - name: Restart systemd-logind
+      ansible.builtin.systemd:
+        name: systemd-logind
+        state: restarted
+
+    - name: Restart pveproxy
+      ansible.builtin.systemd:
+        name: pveproxy
+        state: restarted

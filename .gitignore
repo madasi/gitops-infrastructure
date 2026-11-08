@@ -1,0 +1,20 @@
+# Secrets and Credentials
+*.key
+*.pem
+*.vault
+.env
+*.tfstate
+*.tfstate.*
+secrets/
+
+# OS / Editor artifacts
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.vscode/
+.idea/
+
+# Tool-specific caches
+.terraform/
+.ansible/
