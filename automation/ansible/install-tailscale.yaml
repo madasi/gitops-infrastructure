@@ -1,0 +1,25 @@
+---
+- name: Deploy Tailscale Out-of-Band Management
+  hosts: proxmox_hosts
+  become: yes
+  tasks:
+    - name: Load encrypted SOPS variables
+      community.sops.load_vars:
+        file: vars/secrets.sops.yaml
+
+    - name: Download the official Tailscale installation script
+      ansible.builtin.get_url:
+        url: https://tailscale.com/install.sh
+        dest: /tmp/tailscale-install.sh
+        mode: '0755'
+
+    - name: Execute the installation script
+      ansible.builtin.command: /tmp/tailscale-install.sh
+      args:
+        creates: /usr/bin/tailscale
+
+    - name: Authenticate and connect the node to the tailnet
+      ansible.builtin.command: tailscale up --authkey={{ tailscale_authkey }} --advertise-tags=tag:server
+      register: tailscale_auth
+      changed_when: "'Success' in tailscale_auth.stdout or tailscale_auth.rc == 0"
+      failed_when: tailscale_auth.rc != 0 and 'already authenticated' not in tailscale_auth.stderr
