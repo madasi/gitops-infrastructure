@@ -58,6 +58,13 @@
         update_cache: yes
         upgrade: dist
 
+    - name: Ensure essential utilities (sudo, git) are installed
+      ansible.builtin.apt:
+        name:
+          - sudo
+          - git
+        state: present
+
     - name: Create dedicated ansible user
       ansible.builtin.user:
         name: ansible
