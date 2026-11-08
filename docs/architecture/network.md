@@ -1,14 +1,15 @@
 # Network Architecture & IP Address Management (IPAM)
 
 ## DHCP Scopes & Gateway Topology
-The homelab utilizes a split-horizon DHCP configuration to prevent IP conflicts while maintaining an emergency fallback if the cluster goes down.
+The homelab utilizes a split-horizon DHCP configuration to prevent IP conflicts while maintaining an emergency fallback for residential Wi-Fi clients (currently ~27 devices).
 
 | Service | Role | Range | Gateway |
 | :--- | :--- | :--- | :--- |
-| **Technitium (Primary)** | Primary DNS/DHCP (LXC) | `192.168.1.100` - `192.168.1.200` | `192.168.1.254` |
-| **AT&T BGW620 (Fallback)** | Emergency DHCP | `192.168.1.240` - `192.168.1.250` | `192.168.1.254` |
+| **Technitium (Primary)** | Primary DNS/DHCP (LXC) | `192.168.1.64` - `192.168.1.199` | `192.168.1.254` |
+| **AT&T BGW620 (Fallback)** | Emergency DHCP | `192.168.1.200` - `192.168.1.253` | `192.168.1.254` |
+| **Static Pool** | Core Infrastructure | `192.168.1.1` - `192.168.1.63` | `192.168.1.254` |
 
-*Note: The AT&T gateway is restricted to a 10-IP pool. Technitium handles all primary local routing and DNS ad-blocking.*
+*Note: The AT&T gateway is restricted to a 53-IP pool. Technitium handles all primary local routing and DNS ad-blocking.*
 
 ## Static Infrastructure Reservations
 Core infrastructure components are assigned static IP addresses outside the primary DHCP pool to ensure deterministic routing during cold boots and disaster recovery.
