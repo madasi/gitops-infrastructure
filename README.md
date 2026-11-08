@@ -17,7 +17,7 @@ The environment is built on repurposed hardware running independent, unclustered
 ## Repository Structure
 
 * `/docs/adr/` - Architecture Decision Records (ADRs) explaining technical trade-offs.
-* `/bootstrap/ansible/` - Playbooks for host preparation and Kubernetes cluster assembly.
+* `/automation/ansible/` - Playbooks for host preparation and Kubernetes cluster assembly.
 * `/infrastructure/tofu/` - OpenTofu HCL definitions for virtual machines and LXC nodes.
 * `/kubernetes/base/` - Raw application manifests.
 * `/kubernetes/overlays/` - Kustomize patches for specific deployments (Authentik, Outline, Prom-Stack).
@@ -27,6 +27,6 @@ The environment is built on repurposed hardware running independent, unclustered
 
 1. Physical hosts are provisioned with Proxmox VE 8.x and Debian 12 cloud-init templates.
 2. OpenTofu (`/infrastructure/tofu`) stamps out the control plane and worker VMs.
-3. Ansible (`/bootstrap/ansible`) configures the OS and initializes the Kubernetes cluster via `kubeadm`.
+3. Ansible (`/automation/ansible`) configures the OS and initializes the Kubernetes cluster via `kubeadm`.
 4. ArgoCD is deployed to the cluster and pointed at this repository.
 5. All subsequent application deployments (Authentik, Home Assistant, Observability) are managed entirely via declarative Git commits. Secrets are encrypted in-repo using SOPS and decrypted in-memory by ArgoCD.

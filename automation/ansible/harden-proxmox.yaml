@@ -1,7 +1,7 @@
 ---
 - name: Harden and Prepare Bare-Metal Proxmox Laptop Hosts
   hosts: proxmox_hosts
-  become: false
+  become: true
 
   tasks:
     - name: Prevent laptop sleep on lid close
@@ -14,17 +14,43 @@
         - { regexp: '^#?HandleLidSwitchExternalPower=.*', replace: 'HandleLidSwitchExternalPower=ignore' }
       notify: Restart systemd-logind
 
-    - name: Disable Proxmox Enterprise Repository
-      ansible.builtin.replace:
-        path: /etc/apt/sources.list.d/pve-enterprise.list
-        regexp: '^deb '
-        replace: '#deb '
+    - name: Disable Proxmox Enterprise Repositories (.list)
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/apt/sources.list.d/pve-enterprise.list
+        - /etc/apt/sources.list.d/ceph.list
+      ignore_errors: true
 
-    - name: Add Proxmox No-Subscription Repository
+    - name: Disable Proxmox Enterprise Repositories (.sources)
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/apt/sources.list.d/pve-enterprise.sources
+        - /etc/apt/sources.list.d/ceph.sources
+      ignore_errors: true
+
+    - name: Remove enterprise entries from standard sources.list if present
+      ansible.builtin.lineinfile:
+        path: /etc/apt/sources.list
+        regexp: '.*enterprise\.proxmox\.com.*'
+        state: absent
+      ignore_errors: true
+
+    - name: Add Proxmox No-Subscription Repository (.list)
       ansible.builtin.copy:
         dest: /etc/apt/sources.list.d/pve-no-subscription.list
         content: |
           deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription
+        mode: '0644'
+
+    - name: Add Proxmox Ceph No-Subscription Repository (.list)
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/ceph.list
+        content: |
+          deb http://download.proxmox.com/debian/ceph-squid bookworm no-subscription
         mode: '0644'
 
     - name: Update apt cache and upgrade system packages
@@ -51,11 +77,28 @@
         state: present
         key: "{{ lookup('file', '~/.ssh/id_homelab.pub') }}"
 
-    - name: Disable Proxmox subscription nag message (UI Patch)
-      ansible.builtin.replace:
-        path: /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
-        regexp: "if \\(res === null \\|\\| res === undefined \\|\\| \\!res \\|\\| res\n\\s+\\.data\\.status \\!== 'Active'\\) \\{"
-        replace: "if (false) {"
+    - name: Deploy persistent Proxmox subscription nag removal script (Post-Invoke hook)
+      ansible.builtin.copy:
+        dest: /usr/local/bin/pve-remove-nag.sh
+        content: |
+          #!/bin/sh
+          WEB_JS=/usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
+          if [ -s "$WEB_JS" ] && ! grep -q NoMoreNagging "$WEB_JS"; then
+              sed -i -e "/data\.status/ s/!//" -e "/data\.status/ s/active/NoMoreNagging/" "$WEB_JS"
+          fi
+        mode: '0755'
+
+    - name: Configure APT Post-Invoke hook to keep nag removed on package updates
+      ansible.builtin.copy:
+        dest: /etc/apt/apt.conf.d/no-nag-script
+        content: |
+          DPkg::Post-Invoke { "/usr/local/bin/pve-remove-nag.sh"; };
+        mode: '0644'
+
+    - name: Run subscription nag removal once immediately
+      ansible.builtin.command: /usr/local/bin/pve-remove-nag.sh
+      register: nag_removal
+      changed_when: "'Patching' in nag_removal.stdout or nag_removal.rc == 0"
       notify: Restart pveproxy
 
   handlers:
