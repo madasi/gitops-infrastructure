@@ -16,7 +16,7 @@ provider "sops" {}
 
 # Read the encrypted variables file from the Ansible directory
 data "sops_file" "secrets" {
-  source_file = "../../ansible/vars/secrets.sops.yaml"
+  source_file = "../../ansible/group_vars/all/secrets.sops.yaml"
 }
 
 # Configure the Proxmox provider using the decrypted SOPS data

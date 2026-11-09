@@ -4,6 +4,10 @@
   become: true
 
   tasks:
+    - name: Load encrypted SOPS variables
+      community.sops.load_vars:
+        file: vars/secrets.sops.yaml
+
     - name: Prevent laptop sleep on lid close
       ansible.builtin.replace:
         path: /etc/systemd/logind.conf
@@ -70,13 +74,17 @@
         name: ansible
         state: present
         shell: /bin/bash
+        groups: sudo
+        append: yes
         create_home: yes
+        password: "{{ ansible_become_pass | password_hash('sha512') }}"
 
-    - name: Allow ansible user to have passwordless sudo
+    - name: Explicitly define sudo access for ansible user (requires password)
       ansible.builtin.copy:
+        content: "ansible ALL=(ALL:ALL) ALL"
         dest: /etc/sudoers.d/ansible
-        content: "ansible ALL=(ALL) NOPASSWD: ALL"
         mode: '0440'
+        validate: /usr/sbin/visudo -csf %s
 
     - name: Set up authorized keys for the ansible user
       ansible.posix.authorized_key:
@@ -126,6 +134,18 @@
       register: template_download
       changed_when: "'changed:' in template_download.stdout"
 
+    - name: Enforce strict key-based SSH authentication
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        state: present
+      loop:
+        - { regexp: '^#?PermitRootLogin', line: 'PermitRootLogin no' }
+        - { regexp: '^#?PasswordAuthentication', line: 'PasswordAuthentication no' }
+        - { regexp: '^#?KbdInteractiveAuthentication', line: 'KbdInteractiveAuthentication no' }
+      notify: Restart SSH
+
   handlers:
     - name: Restart systemd-logind
       ansible.builtin.systemd:
@@ -135,4 +155,9 @@
     - name: Restart pveproxy
       ansible.builtin.systemd:
         name: pveproxy
+        state: restarted
+
+    - name: Restart SSH
+      ansible.builtin.systemd:
+        name: ssh
         state: restarted

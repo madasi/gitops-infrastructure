@@ -3,9 +3,6 @@
   hosts: proxmox_hosts
   become: yes
   tasks:
-    - name: Load encrypted SOPS variables
-      community.sops.load_vars:
-        file: vars/secrets.sops.yaml
 
     - name: Download the official Tailscale installation script
       ansible.builtin.get_url:

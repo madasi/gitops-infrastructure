@@ -1,0 +1,31 @@
+---
+- name: Deploy Technitium DNS
+  hosts: dns_servers
+  become: yes
+  tasks:
+    - name: Wait for SSH to become available
+      ansible.builtin.wait_for_connection:
+        timeout: 60
+
+    - name: Install curl
+      ansible.builtin.apt:
+        name: curl
+        state: present
+        update_cache: yes
+
+    - name: Download Technitium install script
+      ansible.builtin.get_url:
+        url: https://download.technitium.com/dns/install.sh
+        dest: /tmp/install-technitium.sh
+        mode: '0755'
+
+    - name: Execute installation script
+      ansible.builtin.command: /tmp/install-technitium.sh
+      args:
+        creates: /etc/systemd/system/dns.service
+
+    - name: Verify DNS service is enabled and running
+      ansible.builtin.systemd:
+        name: dns
+        enabled: yes
+        state: started

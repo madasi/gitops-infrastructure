@@ -1,0 +1,63 @@
+---
+- name: Baseline LXC Security and User Setup
+  hosts: all
+  tasks:
+
+    - name: Ensure sudo is installed
+      become: yes
+      ansible.builtin.apt:
+        name: sudo
+        state: present
+        update_cache: yes
+
+    - name: Create ansible user with secure password
+      become: yes
+      ansible.builtin.user:
+        name: ansible
+        shell: /bin/bash
+        groups: sudo
+        append: yes
+        create_home: yes
+        password: "{{ ansible_become_pass | password_hash('sha512') }}"
+
+    - name: Explicitly define sudo access for ansible user (requires password)
+      become: yes
+      ansible.builtin.copy:
+        content: "ansible ALL=(ALL:ALL) ALL"
+        dest: /etc/sudoers.d/ansible
+        mode: '0440'
+        validate: /usr/sbin/visudo -csf %s
+
+    - name: Set authorized key for ansible user
+      become: yes
+      ansible.posix.authorized_key:
+        user: ansible
+        state: present
+        key: "{{ lookup('file', '~/.ssh/id_homelab.pub') }}"
+
+    - name: Verify SSH connection as ansible user
+      ansible.builtin.wait_for_connection:
+        timeout: 10
+      vars:
+        ansible_user: ansible
+        ansible_become: no
+
+    - name: Enforce strict key-based SSH authentication
+      become: yes
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        state: present
+      loop:
+        - { regexp: '^#?PermitRootLogin', line: 'PermitRootLogin no' }
+        - { regexp: '^#?PasswordAuthentication', line: 'PasswordAuthentication no' }
+        - { regexp: '^#?KbdInteractiveAuthentication', line: 'KbdInteractiveAuthentication no' }
+      notify: Restart SSH
+
+  handlers:
+    - name: Restart SSH
+      become: yes
+      ansible.builtin.systemd:
+        name: ssh
+        state: restarted
