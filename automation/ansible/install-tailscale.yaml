@@ -25,5 +25,5 @@
       failed_when: false
 
     - name: Authenticate and connect the node to the tailnet
-      ansible.builtin.command: tailscale up --authkey={{ tailscale_authkey }} --advertise-tags=tag:server
+      ansible.builtin.command: tailscale up --authkey={{ tailscale_authkey }} --advertise-tags=tag:server --accept-dns=false
       when: "'Logged out' in tailscale_status.stdout or tailscale_status.rc != 0"
