@@ -18,3 +18,7 @@ Thumbs.db
 # Tool-specific caches
 .terraform/
 .ansible/
+
+# Ignore crash logs
+crash.log
+crash.*.log

@@ -7,8 +7,8 @@ Establish the core virtualization platform, secure the network perimeter, and im
 
 - [x] High-Availability Git routing and repository scaffolding.
 - [x] Architectural documentation (ADRs 0001 through 0009).
-- [ ] Bare-metal Proxmox hypervisor provisioning.
-- [ ] Out-of-band management mesh via Tailscale.
+- [x] Bare-metal Proxmox hypervisor provisioning.
+- [x] Out-of-band management mesh via Tailscale.
 - [ ] Split-horizon DNS and DHCP fail-safes (Technitium/AT&T IP Passthrough).
 - [ ] OpenTofu VM orchestration and Ansible cluster bootstrap (`kubeadm`).
 - [ ] ArgoCD GitOps pipeline with SOPS in-repo secret encryption.

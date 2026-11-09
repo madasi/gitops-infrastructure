@@ -1,12 +1,16 @@
 # Tactical Backlog & Action Items
 
 ## Immediate Next Steps (Hypervisor Bootstrap)
-- [ ] **Flash Installation Media:** Write Proxmox VE ISO to USB drive.
-- [ ] **Install Proxmox OS:** Provision base OS on `pve-dell01` and `pve-acer` laptops.
-- [ ] **Configure Tailscale OOB:** Install Tailscale directly on the new Proxmox hosts for emergency administrative mesh access.
+- [x] **Flash Installation Media:** Write Proxmox VE ISO to USB drive.
+- [x] **Install Proxmox OS:** Provision base OS on `pve-dell01` laptop.
+- [ ] **Install Proxmox OS:** Provision base OS on `pve-dell02` laptop.
+- [ ] **Install Proxmox OS:** Provision base OS on `pve-acer` laptop.
+- [x] **Configure Tailscale OOB (`pve-dell01`):** Install Tailscale directly on `pve-dell01` for emergency administrative mesh access.
+- [ ] **Configure Tailscale OOB (`pve-acer`):** Install Tailscale directly on `pve-acer` for emergency administrative mesh access.
+- [ ] **Configure Tailscale OOB (`pve-dell02`):** Install Tailscale directly on `pve-dell02` once provisioned.
 
 ## Documentation & Architecture
-- [ ] **Document IPAM:** Create `docs/architecture/network.md` and document Technitium/AT&T DHCP scopes and static infrastructure IP reservations.
+- [x] **Document IPAM:** Create `docs/architecture/network.md` and document Technitium/AT&T DHCP scopes and static infrastructure IP reservations.
 - [ ] **Define VZDump Retention Policy:** Document daily/weekly VM backup retention counts per node to prevent local disk exhaustion.
 - [ ] **Map Cross-Node Backup Targets:** Explicitly document which Proxmox host backs up to which local path.
 - [ ] **Establish Restore Testing Cadence:** Add a recurring task for dry-run worker VM restores from VZDump archives.
