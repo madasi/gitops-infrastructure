@@ -1,0 +1,34 @@
+---
+- name: Configure Technitium DNS via API
+  hosts: dns_servers
+  vars:
+    api_url: "http://{{ ansible_host }}:5380/api"
+  tasks:
+    - name: Configure Upstream Forwarders (Cloudflare & Google)
+      ansible.builtin.uri:
+        url: "{{ api_url }}/settings/set"
+        method: POST
+        body_format: form-urlencoded
+        body:
+          token: "{{ technitium_api_token }}"
+          forwarders: "1.1.1.1,8.8.8.8"
+        status_code: 200
+        return_content: yes
+      register: forwarder_config
+      failed_when: "'\"status\":\"ok\"' not in forwarder_config.content | replace(' ', '')"
+
+    - name: Create local zone (madasi.com)
+      ansible.builtin.uri:
+        url: "{{ api_url }}/zones/create"
+        method: POST
+        body_format: form-urlencoded
+        body:
+          token: "{{ technitium_api_token }}"
+          zone: "madasi.com"
+          type: "Primary"
+        status_code: [200, 400] # 400 allows idempotency if the zone already exists
+        return_content: yes
+      register: zone_creation
+      failed_when:
+        - "'\"status\":\"ok\"' not in zone_creation.content | replace(' ', '')"
+        - "'already exists' not in zone_creation.content"

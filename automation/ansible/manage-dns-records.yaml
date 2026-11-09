@@ -1,0 +1,30 @@
+---
+- name: Manage Local A Records
+  hosts: dns_servers
+  vars:
+    api_url: "http://{{ ansible_host }}:5380/api"
+    # This list acts as your Infrastructure-as-Code source of truth
+    local_a_records:
+      - { domain: "pve-dell01.madasi.com", ip: "192.168.1.40" }
+      - { domain: "dns-primary.madasi.com", ip: "192.168.1.53" }
+      # Example of a mirrored public Gandi record:
+      # - { domain: "www.madasi.com", ip: "203.0.113.50" }
+  tasks:
+    - name: Add A Records to madasi.com zone
+      ansible.builtin.uri:
+        url: "{{ api_url }}/zones/records/add"
+        method: POST
+        body_format: form-urlencoded
+        body:
+          token: "{{ technitium_api_token }}"
+          domain: "{{ item.domain }}"
+          zone: "madasi.com"
+          type: "A"
+          ipAddress: "{{ item.ip }}"
+        status_code: [200, 400] # 400 allows the task to pass if the record already exists
+        return_content: yes
+      register: record_creation
+      failed_when:
+        - "'\"status\":\"ok\"' not in record_creation.content | replace(' ', '')"
+        - "'already exists' not in record_creation.content"
+      loop: "{{ local_a_records }}"
