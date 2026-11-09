@@ -1,0 +1,25 @@
+---
+- name: Bootstrap OpenTofu Provisioning User
+  hosts: proxmox_hosts
+  become: yes
+  tasks:
+    - name: Create opentofu user
+      ansible.builtin.command: pveum user add opentofu@pve
+      register: user_add
+      failed_when: user_add.rc != 0 and 'already exists' not in user_add.stderr
+      changed_when: user_add.rc == 0
+
+    - name: Grant Administrator role
+      ansible.builtin.command: pveum acl modify / -user opentofu@pve -role Administrator
+      changed_when: false
+
+    - name: Generate API Token
+      ansible.builtin.command: pveum user token add opentofu@pve provisioner --privsep 0 --output-format json
+      register: token_add
+      failed_when: token_add.rc != 0 and 'already exists' not in token_add.stderr
+      changed_when: token_add.rc == 0
+
+    - name: Display new tokens (Copy these to SOPS)
+      ansible.builtin.debug:
+        msg: "Token for {{ inventory_hostname }}: {{ (token_add.stdout | from_json).value }}"
+      when: token_add.changed

@@ -18,8 +18,12 @@
       args:
         creates: /usr/bin/tailscale
 
+    - name: Check Tailscale authentication status
+      ansible.builtin.command: tailscale status
+      register: tailscale_status
+      changed_when: false
+      failed_when: false
+
     - name: Authenticate and connect the node to the tailnet
       ansible.builtin.command: tailscale up --authkey={{ tailscale_authkey }} --advertise-tags=tag:server
-      register: tailscale_auth
-      changed_when: "'Success' in tailscale_auth.stdout or tailscale_auth.rc == 0"
-      failed_when: tailscale_auth.rc != 0 and 'already authenticated' not in tailscale_auth.stderr
+      when: "'Logged out' in tailscale_status.stdout or tailscale_status.rc != 0"

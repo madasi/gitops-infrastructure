@@ -108,6 +108,24 @@
       changed_when: "'Patching' in nag_removal.stdout or nag_removal.rc == 0"
       notify: Restart pveproxy
 
+    - name: Update Proxmox appliance template database
+      ansible.builtin.command: pveam update
+      changed_when: false
+
+    - name: Download latest Debian 12 LXC template dynamically
+      ansible.builtin.shell: |
+        TEMPLATE=$(pveam available -section system | grep 'debian-12-standard' | awk '{print $2}' | sort -V | tail -n 1)
+        if [ ! -f "/var/lib/vz/template/cache/$TEMPLATE" ]; then
+          pveam download local $TEMPLATE
+          echo "changed:$TEMPLATE"
+        else
+          echo "exists:$TEMPLATE"
+        fi
+      args:
+        executable: /bin/bash
+      register: template_download
+      changed_when: "'changed:' in template_download.stdout"
+
   handlers:
     - name: Restart systemd-logind
       ansible.builtin.systemd:
