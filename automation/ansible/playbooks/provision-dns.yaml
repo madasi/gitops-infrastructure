@@ -1,0 +1,5 @@
+---
+- name: Provision and Configure Technitium DNS
+  hosts: dns_servers
+  roles:
+    - technitium_dns

@@ -1,0 +1,6 @@
+---
+- name: Deploy and Configure Technitium DNS Infrastructure
+  hosts: dns_servers
+  roles:
+    - technitium_dns
+    - dns_records

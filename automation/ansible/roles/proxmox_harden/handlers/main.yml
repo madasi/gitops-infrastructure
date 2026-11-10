@@ -1,0 +1,18 @@
+---
+# handlers file for proxmox_harden
+
+- name: Restart systemd-logind
+  ansible.builtin.systemd:
+    name: systemd-logind
+    state: restarted
+
+- name: Restart pveproxy
+  ansible.builtin.systemd:
+    name: pveproxy
+    state: restarted
+
+- name: Restart SSH
+  become: yes
+  ansible.builtin.systemd:
+    name: ssh
+    state: restarted

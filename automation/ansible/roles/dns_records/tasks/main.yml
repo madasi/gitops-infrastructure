@@ -1,0 +1,38 @@
+
+---
+- name: Ensure internal DNS zone exists (inside.madasi.com)
+  ansible.builtin.uri:
+    url: "http://{{ ansible_host }}:5380/api/zones/create"
+    method: POST
+    body_format: form-urlencoded
+    body:
+      token: "{{ technitium_api_token }}"
+      zone: "inside.madasi.com"
+      type: "Primary"
+    status_code: [200, 400]
+    return_content: yes
+  register: zone_creation
+  failed_when:
+    - "'\"status\":\"ok\"' not in zone_creation.content | replace(' ', '')"
+    - "'already exists' not in zone_creation.content"
+
+- name: Register inventory hosts into inside.madasi.com zone
+  ansible.builtin.uri:
+    url: "http://{{ ansible_host }}:5380/api/zones/records/add"
+    method: POST
+    body_format: form-urlencoded
+    body:
+      token: "{{ technitium_api_token }}"
+      domain: "{{ item.key }}.inside.madasi.com"
+      zone: "inside.madasi.com"
+      type: "A"
+      ipAddress: "{{ item.value.ansible_host | default(item.value.ip) }}"
+    status_code: [200, 400]
+    return_content: yes
+  register: record_creation
+  failed_when:
+    - "'\"status\":\"ok\"' not in record_creation.content | replace(' ', '')"
+    - "'already exists' not in record_creation.content"
+  # Loops dynamically over all hosts defined in your Ansible inventory
+  loop: "{{ hostvars | dict2items }}"
+  when: item.value.ansible_host is defined

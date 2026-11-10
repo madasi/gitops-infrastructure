@@ -1,0 +1,8 @@
+---
+# handlers file for lxc_bootstrap
+
+- name: Restart SSH
+  become: yes
+  ansible.builtin.systemd:
+    name: ssh
+    state: restarted

@@ -1,0 +1,5 @@
+---
+- name: Baseline LXC Security and User Setup
+  hosts: lxc_hosts
+  roles:
+    - lxc_bootstrap
