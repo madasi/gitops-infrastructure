@@ -1,0 +1,74 @@
+---
+name: Infrastructure Validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  yaml-lint:
+    name: YAML Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install yamllint
+        run: pip install yamllint
+
+      - name: Run yamllint
+        run: |
+          yamllint -d "{extends: relaxed, rules: {line-length: disable}}" .
+
+  opentofu-lint:
+    name: OpenTofu Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+
+      - name: Check formatting
+        run: tofu fmt -check -recursive automation/terraform/
+
+  ansible-validation:
+    name: Ansible Syntax & Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Ansible & dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible ansible-lint
+
+      - name: Install Ansible Collections
+        run: |
+          ansible-galaxy collection install -r automation/ansible/requirements.yml
+
+      - name: Ansible Syntax Check
+        run: |
+          for playbook in automation/ansible/*.yaml; do
+            if [ -f "$playbook" ]; then
+              ansible-playbook --syntax-check -i automation/ansible/inventory.ini "$playbook"
+            fi
+          done
+
+      - name: Run Ansible Lint (Informational)
+        run: |
+          ansible-lint automation/ansible/ || true
