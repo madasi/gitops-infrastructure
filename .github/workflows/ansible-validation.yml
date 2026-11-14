@@ -3,11 +3,28 @@ name: Infrastructure Validation
 
 on:
   push:
-    branches: [main]
+    branches: [main, ci/github-actions-baseline]
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
+  secret-scanning:
+    name: Secret Scanning (Gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2.3.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   yaml-lint:
     name: YAML Lint
     runs-on: ubuntu-latest
@@ -18,14 +35,14 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.11'
 
       - name: Install yamllint
-        run: pip install yamllint
+        run: pip install yamllint==1.35.1
 
       - name: Run yamllint
         run: |
-          yamllint -d "{extends: relaxed, rules: {line-length: disable}}" .
+          yamllint -d "{extends: relaxed, rules: {line-length: disable}}" .github/workflows automation/ansible
 
   opentofu-lint:
     name: OpenTofu Format Check
@@ -36,6 +53,8 @@ jobs:
 
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.8.8
 
       - name: Check formatting
         run: tofu fmt -check -recursive automation/terraform/
@@ -50,12 +69,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.11'
 
       - name: Install Ansible & dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install ansible ansible-lint
+          pip install ansible==10.5.0 ansible-lint==24.10.0 sops
 
       - name: Install Ansible Collections
         run: |
@@ -63,12 +82,22 @@ jobs:
 
       - name: Ansible Syntax Check
         run: |
-          for playbook in automation/ansible/*.yaml; do
+          found=0
+          # Check both current root-level and refactor nested playbook paths
+          for playbook in automation/ansible/*.yaml automation/ansible/playbooks/*.yaml; do
             if [ -f "$playbook" ]; then
-              ansible-playbook --syntax-check -i automation/ansible/inventory.ini "$playbook"
+              found=$((found + 1))
+              echo "Running syntax check on $playbook"
+              # If testing refactor layout, use refactor inventory if present
+              if [[ "$playbook" == *"playbooks"* ]] && [ -f "automation/ansible/inventory/inventory.ini" ]; then
+                ansible-playbook --syntax-check -i automation/ansible/inventory/inventory.ini "$playbook"
+              else
+                ansible-playbook --syntax-check -i automation/ansible/inventory.ini "$playbook"
+              fi
             fi
           done
+          echo "Checked $found playbooks successfully."
 
-      - name: Run Ansible Lint (Informational)
+      - name: Run Ansible Lint
         run: |
-          ansible-lint automation/ansible/ || true
+          ansible-lint automation/ansible/
