@@ -1,5 +1,7 @@
 # Homelab Infrastructure & GitOps Pipeline
 
+[![Infrastructure Validation](https://github.com/madasi/gitops-infrastructure/actions/workflows/ansible-validation.yml/badge.svg?branch=main)](https://github.com/madasi/gitops-infrastructure/actions/workflows/ansible-validation.yml?query=branch%3Amain)
+
 This repository contains the declarative Infrastructure as Code (IaC), GitOps manifests, and automation runbooks for a bare-metal homelab environment. It serves as a testing ground for cloud-native architectures, Kubernetes administration (CKA alignment), and observability.
 
 ## Architecture Overview
@@ -22,6 +24,10 @@ The environment is built on repurposed hardware running independent, unclustered
 * `/kubernetes/base/` - Raw application manifests.
 * `/kubernetes/overlays/` - Kustomize patches for specific deployments (Authentik, Outline, Prom-Stack).
 * `/scripts/` - Utility scripts for maintenance and etcd backups.
+
+## Continuous Integration
+
+GitHub Actions runs read-only validation on pull requests and pushes to `main`. Checks cover secret scanning, YAML lint, Ansible syntax and strict lint, SOPS ciphertext metadata, and OpenTofu formatting and configuration validation. CI does not deploy infrastructure or decrypt SOPS secrets.
 
 ## Deployment Pipeline
 
