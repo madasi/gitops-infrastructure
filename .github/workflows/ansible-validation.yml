@@ -96,6 +96,10 @@ jobs:
           # Check both current root-level and refactor nested playbook paths
           for playbook in automation/ansible/*.yaml automation/ansible/*.yml automation/ansible/playbooks/*.yaml automation/ansible/playbooks/*.yml; do
             if [ -f "$playbook" ]; then
+              # The Galaxy collection manifest is YAML, but not an Ansible playbook.
+              if [ "$playbook" = "automation/ansible/requirements.yml" ]; then
+                continue
+              fi
               found=$((found + 1))
               echo "Running syntax check on $playbook"
               # If testing refactor layout, use refactor inventory if present
@@ -114,4 +118,4 @@ jobs:
 
       - name: Run Ansible Lint
         run: |
-          ansible-lint automation/ansible/
+          ansible-lint --strict automation/ansible/
