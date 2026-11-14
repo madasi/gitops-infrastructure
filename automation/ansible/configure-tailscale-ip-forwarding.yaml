@@ -1,0 +1,15 @@
+---
+- name: Enable IPv4 forwarding for the Tailscale subnet router
+  hosts: pve-dell01
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Ensure IPv4 forwarding is enabled and persistent
+      ansible.posix.sysctl:
+        name: net.ipv4.ip_forward
+        value: "1"
+        state: present
+        sysctl_file: /etc/sysctl.d/99-tailscale.conf
+        sysctl_set: true
+        reload: true
