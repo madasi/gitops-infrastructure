@@ -69,12 +69,12 @@ def main() -> int:
     files = sorted(
         path
         for path in Path(".").rglob("*.sops.yaml")
-        if ".git" not in path.parts
+        if ".git" not in path.parts and path.name != ".sops.yaml"
     )
     files += sorted(
         path
         for path in Path(".").rglob("*.sops.yml")
-        if ".git" not in path.parts
+        if ".git" not in path.parts and path.name != ".sops.yml"
     )
     if not files:
         print("No SOPS YAML files found.")

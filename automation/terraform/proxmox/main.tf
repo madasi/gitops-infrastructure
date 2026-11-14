@@ -21,7 +21,7 @@ resource "proxmox_virtual_environment_container" "technitium_dns" {
 
     user_account {
       keys = [
-        trimspace(file("~/.ssh/id_homelab.pub"))
+        trimspace(file(pathexpand("~/.ssh/id_homelab.pub")))
       ]
     }
   }

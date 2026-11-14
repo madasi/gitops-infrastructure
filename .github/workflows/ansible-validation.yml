@@ -71,6 +71,11 @@ jobs:
         working-directory: automation/terraform/proxmox
         run: tofu init -backend=false -input=false -lockfile=readonly
 
+      - name: Provide validation-only SSH key fixture
+        run: |
+          mkdir -p "$HOME/.ssh"
+          printf '%s\n' 'validation-only-placeholder' > "$HOME/.ssh/id_homelab.pub"
+
       - name: Validate configuration
         working-directory: automation/terraform/proxmox
         run: tofu validate -no-color
