@@ -40,8 +40,8 @@ resource "proxmox_virtual_environment_container" "technitium_dns" {
   }
 
   network_interface {
-    name    = "eth0"
-    bridge  = "vmbr0"
+    name   = "eth0"
+    bridge = "vmbr0"
   }
 
   operating_system {

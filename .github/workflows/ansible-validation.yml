@@ -5,7 +5,6 @@ on:
   push:
     branches: [main, ci/github-actions-baseline]
   pull_request:
-    branches: [main]
 
 permissions:
   contents: read
@@ -13,27 +12,31 @@ permissions:
 jobs:
   secret-scanning:
     name: Secret Scanning (Gitleaks)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2.3.0
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: false
 
   yaml-lint:
     name: YAML Lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.11'
 
@@ -46,13 +49,15 @@ jobs:
 
   opentofu-lint:
     name: OpenTofu Format Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
 
       - name: Setup OpenTofu
-        uses: opentofu/setup-opentofu@v1
+        uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
         with:
           tofu_version: 1.8.8
 
@@ -61,16 +66,18 @@ jobs:
 
   ansible-validation:
     name: Ansible Syntax & Lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       # Keep syntax and lint checks independent of encrypted secret values.
       ANSIBLE_VARS_ENABLED: host_group_vars
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.11'
 
@@ -87,7 +94,7 @@ jobs:
         run: |
           found=0
           # Check both current root-level and refactor nested playbook paths
-          for playbook in automation/ansible/*.yaml automation/ansible/playbooks/*.yaml; do
+          for playbook in automation/ansible/*.yaml automation/ansible/*.yml automation/ansible/playbooks/*.yaml automation/ansible/playbooks/*.yml; do
             if [ -f "$playbook" ]; then
               found=$((found + 1))
               echo "Running syntax check on $playbook"
@@ -99,6 +106,10 @@ jobs:
               fi
             fi
           done
+          if [ "$found" -eq 0 ]; then
+            echo "No Ansible playbooks found." >&2
+            exit 1
+          fi
           echo "Checked $found playbooks successfully."
 
       - name: Run Ansible Lint
