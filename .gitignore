@@ -6,6 +6,8 @@
 *.tfstate
 *.tfstate.*
 secrets/
+.venv-ci/
+
 
 # OS / Editor artifacts
 .DS_Store
