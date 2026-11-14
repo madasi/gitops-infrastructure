@@ -6,8 +6,8 @@ resource "proxmox_virtual_environment_container" "technitium_dns" {
   start_on_boot = true
 
   features {
-      nesting = true
-    }
+    nesting = true
+  }
 
   initialization {
     hostname = "dns-primary"

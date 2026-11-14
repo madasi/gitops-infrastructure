@@ -62,6 +62,9 @@ jobs:
   ansible-validation:
     name: Ansible Syntax & Lint
     runs-on: ubuntu-latest
+    env:
+      # Keep syntax and lint checks independent of encrypted secret values.
+      ANSIBLE_VARS_ENABLED: host_group_vars
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -74,7 +77,7 @@ jobs:
       - name: Install Ansible & dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install ansible==10.5.0 ansible-lint==24.10.0 sops
+          pip install ansible==10.5.0 ansible-lint==24.10.0
 
       - name: Install Ansible Collections
         run: |
