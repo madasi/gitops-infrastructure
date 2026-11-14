@@ -1,0 +1,3 @@
+exclude_paths:
+  # Encrypted SOPS ciphertext is data, not Ansible source to lint.
+  - automation/ansible/group_vars/all/secrets.sops.yaml

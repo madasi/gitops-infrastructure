@@ -4,24 +4,24 @@
   tasks:
 
     - name: Ensure sudo is installed
-      become: yes
+      become: true
       ansible.builtin.apt:
         name: sudo
         state: present
-        update_cache: yes
+        update_cache: true
 
     - name: Create ansible user with secure password
-      become: yes
+      become: true
       ansible.builtin.user:
         name: ansible
         shell: /bin/bash
         groups: sudo
-        append: yes
-        create_home: yes
+        append: true
+        create_home: true
         password: "{{ ansible_become_pass | password_hash('sha512') }}"
 
     - name: Explicitly define sudo access for ansible user (requires password)
-      become: yes
+      become: true
       ansible.builtin.copy:
         content: "ansible ALL=(ALL:ALL) ALL"
         dest: /etc/sudoers.d/ansible
@@ -29,7 +29,7 @@
         validate: /usr/sbin/visudo -csf %s
 
     - name: Set authorized key for ansible user
-      become: yes
+      become: true
       ansible.posix.authorized_key:
         user: ansible
         state: present
@@ -40,10 +40,10 @@
         timeout: 10
       vars:
         ansible_user: ansible
-        ansible_become: no
+        ansible_become: false
 
     - name: Enforce strict key-based SSH authentication
-      become: yes
+      become: true
       ansible.builtin.lineinfile:
         path: /etc/ssh/sshd_config
         regexp: "{{ item.regexp }}"
@@ -57,7 +57,7 @@
 
   handlers:
     - name: Restart SSH
-      become: yes
+      become: true
       ansible.builtin.systemd:
         name: ssh
         state: restarted

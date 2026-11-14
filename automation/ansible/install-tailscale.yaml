@@ -1,7 +1,7 @@
 ---
 - name: Deploy Tailscale Out-of-Band Management
   hosts: proxmox_hosts
-  become: yes
+  become: true
   tasks:
 
     - name: Download the official Tailscale installation script
@@ -24,3 +24,4 @@
     - name: Authenticate and connect the node to the tailnet
       ansible.builtin.command: tailscale up --authkey={{ tailscale_authkey }} --advertise-tags=tag:server --accept-dns=false
       when: "'Logged out' in tailscale_status.stdout or tailscale_status.rc != 0"
+      changed_when: true

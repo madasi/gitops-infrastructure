@@ -1,7 +1,7 @@
 ---
 - name: Bootstrap OpenTofu Provisioning User
   hosts: proxmox_hosts
-  become: yes
+  become: true
   tasks:
     - name: Create opentofu user
       ansible.builtin.command: pveum user add opentofu@pve
@@ -22,4 +22,4 @@
     - name: Display new tokens (Copy these to SOPS)
       ansible.builtin.debug:
         msg: "Token for {{ inventory_hostname }}: {{ (token_add.stdout | from_json).value }}"
-      when: token_add.changed
+      when: token_add.rc == 0
