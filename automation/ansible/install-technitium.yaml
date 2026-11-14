@@ -1,7 +1,7 @@
 ---
 - name: Deploy Technitium DNS
   hosts: dns_servers
-  become: yes
+  become: true
   tasks:
     - name: Wait for SSH to become available
       ansible.builtin.wait_for_connection:
@@ -11,7 +11,7 @@
       ansible.builtin.apt:
         name: curl
         state: present
-        update_cache: yes
+        update_cache: true
 
     - name: Download Technitium install script
       ansible.builtin.get_url:
@@ -27,5 +27,5 @@
     - name: Verify DNS service is enabled and running
       ansible.builtin.systemd:
         name: dns
-        enabled: yes
+        enabled: true
         state: started

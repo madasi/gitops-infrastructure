@@ -6,8 +6,8 @@ resource "proxmox_virtual_environment_container" "technitium_dns" {
   start_on_boot = true
 
   features {
-      nesting = true
-    }
+    nesting = true
+  }
 
   initialization {
     hostname = "dns-primary"
@@ -21,7 +21,7 @@ resource "proxmox_virtual_environment_container" "technitium_dns" {
 
     user_account {
       keys = [
-        trimspace(file("~/.ssh/id_homelab.pub"))
+        trimspace(file(pathexpand("~/.ssh/id_homelab.pub")))
       ]
     }
   }
@@ -40,8 +40,8 @@ resource "proxmox_virtual_environment_container" "technitium_dns" {
   }
 
   network_interface {
-    name    = "eth0"
-    bridge  = "vmbr0"
+    name   = "eth0"
+    bridge = "vmbr0"
   }
 
   operating_system {

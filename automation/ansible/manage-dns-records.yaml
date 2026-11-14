@@ -22,7 +22,7 @@
           type: "A"
           ipAddress: "{{ item.ip }}"
         status_code: [200, 400] # 400 allows the task to pass if the record already exists
-        return_content: yes
+        return_content: true
       register: record_creation
       failed_when:
         - "'\"status\":\"ok\"' not in record_creation.content | replace(' ', '')"

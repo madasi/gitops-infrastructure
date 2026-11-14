@@ -13,7 +13,7 @@
           token: "{{ technitium_api_token }}"
           forwarders: "1.1.1.1,8.8.8.8"
         status_code: 200
-        return_content: yes
+        return_content: true
       register: forwarder_config
       failed_when: "'\"status\":\"ok\"' not in forwarder_config.content | replace(' ', '')"
 
@@ -27,7 +27,7 @@
           zone: "madasi.com"
           type: "Primary"
         status_code: [200, 400] # 400 allows idempotency if the zone already exists
-        return_content: yes
+        return_content: true
       register: zone_creation
       failed_when:
         - "'\"status\":\"ok\"' not in zone_creation.content | replace(' ', '')"
